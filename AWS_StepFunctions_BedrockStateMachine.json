@@ -1,0 +1,114 @@
+{
+  "Comment": "Este exemplo encandeia três prompts no Amazon Bedrock para conseguir uma sugestões de comidas, bebidas e lugares para uma comemoração de aniversário para 15 pessoas na cidade de Salvador-BA.",
+  "StartAt": "Sugestão de cardápio",
+  "States": {
+    "Sugestão de cardápio": {
+      "Type": "Pass",
+      "Result": "Estou comemorando o meu ainversário e gostaria de fazer um pequeno jantar para 15 pessoas. Preciso de uma sugestão de cardápio com opções de petiscos para esta comemoração.",
+      "ResultPath": "$.prompt_one",
+      "Next": "Cardápio da festa"
+    },
+    "Cardápio da festa": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::bedrock:invokeModel",
+      "Parameters": {
+        "ModelId": "arn:aws:bedrock:sa-east-1::foundation-model/amazon.titan-text-express-v1",
+        "ContentType": "application/json",
+        "Accept": "*/*",
+        "Body": {
+          "inputText.$": "$.prompt_one",
+          "textGenerationConfig": {
+            "temperature": 0,
+            "topP": 1,
+            "maxTokenCount": 2000
+          }
+        }
+      },
+      "Next": "Guardar cardápio",
+      "ResultPath": "$.result_one",
+      "ResultSelector": {
+        "result_one.$": "$.Body.results[0].outputText"
+      }
+    },
+    "Guardar cardápio": {
+      "Type": "Pass",
+      "Parameters": {
+        "convo_one.$": "States.Format('{}\n{}', $.prompt_one, $.result_one.result_one)"
+      },
+      "ResultPath": "$.convo_one",
+      "Next": "Sugestão de bebidas"
+    },
+    "Sugestão de bebidas": {
+      "Type": "Pass",
+      "Result": "Qual seria sua sugestão de bebidas para acompanhar o cardápio proposto?",
+      "ResultPath": "$.prompt_one",
+      "Next": "Cardapio de bebidas"
+    },
+    "Cardapio de bebidas": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::bedrock:invokeModel",
+      "Parameters": {
+        "ModelId": "arn:aws:bedrock:sa-east-1::foundation-model/amazon.titan-text-express-v1",
+        "ContentType": "application/json",
+        "Accept": "*/*",
+        "Body": {
+          "inputText.$": "$.prompt_one",
+          "textGenerationConfig": {
+            "temperature": 0,
+            "topP": 1,
+            "maxTokenCount": 2000
+          }
+        }
+      },
+      "ResultPath": "$.result_one",
+      "ResultSelector": {
+        "result_one.$": "$.Body.results[0].outputText"
+      },
+      "Next": "Guardar bebidas"
+    },
+    "Guardar bebidas": {
+      "Type": "Pass",
+      "Parameters": {
+        "convo_one.$": "States.Format('{}\n{}', $.prompt_one, $.result_one.result_one)"
+      },
+      "ResultPath": "$.convo_one",
+      "Next": "Sugestão de lugares"
+    },
+    "Sugestão de lugares": {
+      "Type": "Pass",
+      "Result": "Agora, para finalizar, poderia me ajudar a escolher um lugar para este aniversário na cidade de Salvador, na Bahia?",
+      "ResultPath": "$.prompt_one",
+      "Next": "Guardar lugares"
+    },
+    "Guardar lugares": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::bedrock:invokeModel",
+      "Parameters": {
+        "ModelId": "arn:aws:bedrock:sa-east-1::foundation-model/amazon.titan-text-express-v1",
+        "ContentType": "application/json",
+        "Accept": "*/*",
+        "Body": {
+          "inputText.$": "$.prompt_one",
+          "textGenerationConfig": {
+            "temperature": 0,
+            "topP": 1,
+            "maxTokenCount": 2000
+          }
+        }
+      },
+      "ResultPath": "$.result_one",
+      "ResultSelector": {
+        "result_one.$": "$.Body.results[0].outputText"
+      },
+      "Next": "Guardar resultados"
+    },
+    "Guardar resultados": {
+      "Type": "Pass",
+      "Parameters": {
+        "convo_one.$": "States.Format('{}\n{}', $.prompt_one, $.result_one.result_one)"
+      },
+      "ResultPath": "$.convo_one",
+      "End": true
+    }
+  }
+}
